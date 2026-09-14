@@ -2,11 +2,11 @@
 
 ## Baseline Produksi
 
-- Release: **V1.0**
-- Current enhancement build: **v24-void**
+- Release: **V1.0 Final**
+- Current production build: **v1.0-final**
 - Repository branch: `main`
-- Legacy production source: `warung-bahagia-demo-supabase-final-v23.html`
-- Web entry point: `index.html` → `warung-bahagia-v1.0-void.html`
+- Web entry point: `index.html`
+- Final wrapper: `warung-bahagia-v1.0-final.html`
 - Deployment: GitHub Pages
 
 ## V1.0 Scope
@@ -21,19 +21,33 @@ V1.0 mencakup alur operasional POS, katalog dan kategori produk, keranjang trans
 - Stok setiap item dikembalikan.
 - Mutasi stok reversal dicatat dengan `movement_type = 'void'`.
 - Transaksi tetap tersimpan untuk histori/audit.
-- Implementasi backend menggunakan RPC `public.void_pos_transaction(uuid,text)` dengan `SECURITY DEFINER` dan `search_path` yang di-hardening.
+- Backend menggunakan RPC `public.void_pos_transaction(uuid,text)`.
 
-## QA V1.0
+## QA V1.0 Final
 
-Alur utama v23 sebelumnya telah lulus pengujian online:
+Pengujian yang telah dilakukan:
 
-1. Transaksi Kasir
-2. Pesanan / Detail Transaksi
-3. Laporan
-4. Pengaturan Nama Warung / Pajak
-5. Session setelah browser ditutup
+1. Transaksi Kasir — PASS
+2. Pesanan / Detail Transaksi — PASS
+3. Laporan — PASS
+4. Pengaturan Nama Warung / Pajak — PASS
+5. Session setelah browser ditutup — PASS
+6. Void Transaksi Admin — PASS
+7. Filter kategori POS (Semua / Makanan Dapur / Minuman / Sembako / Snack) — PASS
 
-**Regression test Void Transaksi masih menunggu pengujian pengguna sebelum v24-void ditetapkan sebagai baseline final.**
+## Database Operasional Awal
+
+Seluruh transaksi testing telah dikosongkan sebelum penggunaan operasional awal. Master kategori, produk, user, pengaturan, dan stok pembukaan dipertahankan.
+
+Stok pembukaan terakhir yang diverifikasi:
+
+| Produk | Stok |
+|---|---:|
+| Nasi Goreng Spesial | 10 |
+| Es Teh Manis | 50 |
+| Beras Premium 5kg | 12 |
+| Keripik Singkong | 30 |
+| Risoles Frozen | 10 |
 
 ## Backend
 
@@ -44,14 +58,16 @@ Alur utama v23 sebelumnya telah lulus pengujian online:
 
 ## Important Settings
 
-Aplikasi menyimpan nama warung yang dapat dikonfigurasi pada tabel `settings` dengan key `business_name`. Konfigurasi tarif pajak juga disimpan pada `settings`.
+Aplikasi menyimpan nama warung pada tabel `settings` dengan key `business_name`. Tarif pajak juga disimpan pada `settings`.
 
 ## File & Versi
 
-- `warung-bahagia-demo-supabase-final-v23.html` = source produksi V1.0 yang sudah lulus QA sebelumnya
-- `warung-bahagia-v1.0-void.html` = entry/enhancement build untuk Void Transaksi
+- `warung-bahagia-v1.0-final.html` = entry point produksi final
+- `warung-bahagia-v1.0-void.html` = core wrapper dengan Void Transaksi
+- `category-fix-v2.js` = compatibility fix filter kategori
+- `warung-bahagia-demo-supabase-final-v23.html` = source core V23 sebelumnya
 - `warung-bahagia-demo-supabase-final-v22.html` = backup build sebelumnya
 
 ## Development Rule
 
-Perlakukan V1.0 sebagai baseline stabil. Perubahan berikutnya harus menggunakan nomor versi/build baru, diuji regresi, lalu dipromosikan menjadi baseline setelah QA lulus.
+**V1.0 Final frozen.** Jangan mengubah baseline produksi untuk pengembangan berikutnya. Pengembangan baru harus menggunakan nomor versi/build baru, menjalani regression test, lalu dipromosikan setelah QA lulus.
