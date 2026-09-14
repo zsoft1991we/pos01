@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Warung Bahagia POS V1.0 — Void</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;font-family:Arial,sans-serif}
 #appFrame{width:100%;height:100%;border:0;display:block}
@@ -40,21 +39,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
     return data.role==='admin';
   }
 
-  function fixCategoryTabs(doc){
-    if(!doc) return;
-    doc.querySelectorAll('[data-cat]').forEach(btn=>{
-      if(btn.dataset.wbCatFixed==='1') return;
-      btn.dataset.wbCatFixed='1';
-      btn.addEventListener('click',(e)=>{
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        try{
-          if(frame.contentWindow.state) frame.contentWindow.state.cat=btn.dataset.cat;
-          if(typeof frame.contentWindow.render==='function') frame.contentWindow.render();
-        }catch(err){ console.warn('Category filter fix failed',err); }
-      },true);
-    });
-  }
+  function toast(doc,msg){ const x=doc.createElement('div'); x.className='__wb_void_toast'; x.textContent=msg; doc.body.appendChild(x); setTimeout(()=>x.remove(),2600); }
 
   function injectStyle(doc){
     if(doc.getElementById('__wb_void_style')) return;
@@ -80,16 +65,35 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
     `; doc.head.appendChild(st);
   }
 
-  function toast(doc,msg){ const x=doc.createElement('div'); x.className='__wb_void_toast'; x.textContent=msg; doc.body.appendChild(x); setTimeout(()=>x.remove(),2600); }
+  // Fix: the base v23 handler was stripping the first word from category names.
+  // We intercept category-tab clicks in the capture phase and pass the exact data-cat value.
+  function patchCategoryTabs(doc){
+    if(!doc || doc.__wbCategoryTabsPatched) return;
+    doc.__wbCategoryTabsPatched = true;
+    doc.addEventListener('click', (e) => {
+      const btn = e.target?.closest?.('.tabs button[data-cat]');
+      if(!btn) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      try {
+        const w = doc.defaultView;
+        if(!w?.state || typeof w.render!=='function') return;
+        w.state.cat = btn.dataset.cat || 'Semua';
+        w.render();
+      } catch (err) {
+        console.error('Category tab patch failed:', err);
+      }
+    }, true);
+  }
 
   async function showVoidModal(){
     const doc=getDoc(); if(!doc) return;
     injectStyle(doc);
+    patchCategoryTabs(doc);
     if(doc.getElementById('__wb_void_modal')) return;
     const sb=ensureClient();
     const {data:rows,error}=await sb.from('transactions').select('id,receipt_number,transaction_at,grand_total,payment_method,status,note').order('transaction_at',{ascending:false}).limit(50);
     if(error){ toast(doc,'Gagal membaca transaksi: '+error.message); return; }
-
     const modal=doc.createElement('div'); modal.className='__wb_void_modal'; modal.id='__wb_void_modal';
     modal.innerHTML=`<div class="__wb_void_box"><div class="__wb_void_head"><div><h2>Void Transaksi</h2><small>Hanya transaksi berstatus PAID yang bisa dibatalkan.</small></div><button class="__wb_void_close" id="__wb_void_close">×</button></div><div class="__wb_void_list" id="__wb_void_list"></div></div>`;
     doc.body.appendChild(modal);
@@ -129,7 +133,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
 
   async function refreshNav(){
     const doc=getDoc(); if(!doc) return;
-    fixCategoryTabs(doc);
+    patchCategoryTabs(doc);
     const admin=await getAdmin().catch(()=>false);
     if(admin===lastAdminState && (admin ? !!doc.getElementById('__wb_void_nav') : !doc.getElementById('__wb_void_nav'))) return;
     lastAdminState=admin;
@@ -141,9 +145,15 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
 
   frame.addEventListener('load',()=>{
     lastAdminState=null;
-    try{ const doc=getDoc(); observer?.disconnect(); observer=new MutationObserver(()=>refreshNav()); observer.observe(doc.body,{childList:true,subtree:true}); fixCategoryTabs(doc); }catch{}
+    try{
+      const doc=getDoc();
+      patchCategoryTabs(doc);
+      observer?.disconnect();
+      observer=new MutationObserver(()=>refreshNav());
+      if(doc?.body) observer.observe(doc.body,{childList:true,subtree:true});
+    }catch{}
     refreshNav();
-    setInterval(()=>{ refreshNav(); fixCategoryTabs(getDoc()); },2500);
+    setInterval(refreshNav,2500);
   });
 })();
 </script>
