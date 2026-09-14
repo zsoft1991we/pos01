@@ -32,9 +32,9 @@ Versi ini merupakan baseline yang telah diselesaikan sebelum pengembangan lanjut
 
 ## File Utama
 
-`app.html`
+`warung-bahagia-demo-supabase-final-v22.html`
 
-`app.html` adalah entry point aplikasi produksi pada struktur repository yang telah dirapikan. Build historis V1.0 disimpan di `archive/`.
+File tersebut merupakan build single-file V1.0 yang digunakan sebagai baseline aplikasi saat ini.
 
 ## Backend
 
