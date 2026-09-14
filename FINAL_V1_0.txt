@@ -1,4 +1,0 @@
-Warung Bahagia POS V1.0 Final
-Status: READY FOR INITIAL OPERATIONS
-Entry: index.html
-QA: PASS
