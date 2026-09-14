@@ -1,0 +1,7 @@
+Warung Bahagia POS V1.0 Final
+
+Baseline produksi: main
+Entry point: index.html
+Final wrapper: warung-bahagia-v1.0-final.html
+QA: PASS
+Status: READY FOR INITIAL OPERATIONS
