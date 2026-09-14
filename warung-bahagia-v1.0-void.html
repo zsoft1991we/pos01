@@ -40,6 +40,22 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
     return data.role==='admin';
   }
 
+  function fixCategoryTabs(doc){
+    if(!doc) return;
+    doc.querySelectorAll('[data-cat]').forEach(btn=>{
+      if(btn.dataset.wbCatFixed==='1') return;
+      btn.dataset.wbCatFixed='1';
+      btn.addEventListener('click',(e)=>{
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        try{
+          if(frame.contentWindow.state) frame.contentWindow.state.cat=btn.dataset.cat;
+          if(typeof frame.contentWindow.render==='function') frame.contentWindow.render();
+        }catch(err){ console.warn('Category filter fix failed',err); }
+      },true);
+    });
+  }
+
   function injectStyle(doc){
     if(doc.getElementById('__wb_void_style')) return;
     const st=doc.createElement('style'); st.id='__wb_void_style'; st.textContent=`
@@ -113,6 +129,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
 
   async function refreshNav(){
     const doc=getDoc(); if(!doc) return;
+    fixCategoryTabs(doc);
     const admin=await getAdmin().catch(()=>false);
     if(admin===lastAdminState && (admin ? !!doc.getElementById('__wb_void_nav') : !doc.getElementById('__wb_void_nav'))) return;
     lastAdminState=admin;
@@ -124,9 +141,9 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
 
   frame.addEventListener('load',()=>{
     lastAdminState=null;
-    try{ const doc=getDoc(); observer?.disconnect(); observer=new MutationObserver(()=>refreshNav()); observer.observe(doc.body,{childList:true,subtree:true}); }catch{}
+    try{ const doc=getDoc(); observer?.disconnect(); observer=new MutationObserver(()=>refreshNav()); observer.observe(doc.body,{childList:true,subtree:true}); fixCategoryTabs(doc); }catch{}
     refreshNav();
-    setInterval(refreshNav,2500);
+    setInterval(()=>{ refreshNav(); fixCategoryTabs(getDoc()); },2500);
   });
 })();
 </script>
