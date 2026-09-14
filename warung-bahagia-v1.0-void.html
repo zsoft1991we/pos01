@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Warung Bahagia POS V1.0 — Void</title>
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;font-family:Arial,sans-serif}
@@ -65,24 +65,33 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
     `; doc.head.appendChild(st);
   }
 
-  // Fix: the base v23 handler was stripping the first word from category names.
-  // We intercept category-tab clicks in the capture phase and pass the exact data-cat value.
+  // Fix category tabs without touching the base app's lexical state.
+  // The base v23 click handler strips the first token from data-cat, so we
+  // deliberately add a harmless prefix. Example: "Makanan Dapur" becomes
+  // "__WB__ Makanan Dapur" and the original handler resolves it to the
+  // correct category name "Makanan Dapur".
+  function normalizeCategoryButtons(doc){
+    if(!doc) return;
+    try{
+      doc.querySelectorAll('.tabs button[data-cat]').forEach(btn=>{
+        const current=btn.getAttribute('data-cat')||'';
+        if(!current || current.startsWith('__WB__ ')) return;
+        btn.setAttribute('data-cat','__WB__ '+current);
+      });
+    }catch(err){ console.error('Category normalization failed:',err); }
+  }
+
   function patchCategoryTabs(doc){
     if(!doc || doc.__wbCategoryTabsPatched) return;
     doc.__wbCategoryTabsPatched = true;
-    doc.addEventListener('click', (e) => {
-      const btn = e.target?.closest?.('.tabs button[data-cat]');
+    normalizeCategoryButtons(doc);
+    // mousedown occurs before click, so this also covers freshly rendered tabs
+    // before MutationObserver callbacks have had a chance to run.
+    doc.addEventListener('mousedown', (e) => {
+      const btn=e.target?.closest?.('.tabs button[data-cat]');
       if(!btn) return;
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      try {
-        const w = doc.defaultView;
-        if(!w?.state || typeof w.render!=='function') return;
-        w.state.cat = btn.dataset.cat || 'Semua';
-        w.render();
-      } catch (err) {
-        console.error('Category tab patch failed:', err);
-      }
+      const current=btn.getAttribute('data-cat')||'';
+      if(current && !current.startsWith('__WB__ ')) btn.setAttribute('data-cat','__WB__ '+current);
     }, true);
   }
 
@@ -134,6 +143,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
   async function refreshNav(){
     const doc=getDoc(); if(!doc) return;
     patchCategoryTabs(doc);
+    normalizeCategoryButtons(doc);
     const admin=await getAdmin().catch(()=>false);
     if(admin===lastAdminState && (admin ? !!doc.getElementById('__wb_void_nav') : !doc.getElementById('__wb_void_nav'))) return;
     lastAdminState=admin;
