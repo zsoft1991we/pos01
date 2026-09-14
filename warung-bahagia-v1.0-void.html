@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Warung Bahagia POS V1.0 — Void</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;font-family:Arial,sans-serif}
+#iframe{width:100%;height:100%;border:0;display:block}
+</style>
+</head>
+<body>
+<iframe id="appFrame" src="warung-bahagia-demo-supabase-final-v23.html" title="Warung Bahagia POS"></iframe>
+<script>
+(() => {
+  const SUPABASE_URL = 'https://mkderiwqhsjtkgxchtbi.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_Z2q0gqg9J3kxlL_qJm69FQ_9lb8kCBA';
+  const frame = document.getElementById('appFrame');
+  let client = null;
+  let observer = null;
+  let lastAdminState = null;
+
+  const esc = (s='') => String(s).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
+  const rupiah = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n||0));
+  const dateText = s => { try { return new Date(s).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}); } catch { return s||''; } };
+
+  function getDoc(){ try { return frame.contentDocument; } catch { return null; } }
+  function ensureClient(){
+    if(client || !frame.contentWindow) return client;
+    client = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{storage:frame.contentWindow.sessionStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+    return client;
+  }
+  async function getAdmin(){
+    const sb=ensureClient(); if(!sb) return false;
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session?.user?.id) return false;
+    const {data,error}=await sb.from('app_users').select('id,role,full_name,is_active').eq('auth_user_id',session.user.id).maybeSingle();
+    if(error || !data?.is_active) return false;
+    return data.role==='admin';
+  }
+
+  function injectStyle(doc){
+    if(doc.getElementById('__wb_void_style')) return;
+    const st=doc.createElement('style'); st.id='__wb_void_style'; st.textContent=`
+      .__wb_void_modal{position:fixed;inset:0;background:rgba(18,42,28,.55);display:grid;place-items:center;padding:15px;z-index:99999}
+      .__wb_void_box{width:min(820px,96vw);max-height:90vh;overflow:auto;background:#fff;border-radius:24px;padding:20px;box-shadow:0 25px 80px rgba(0,0,0,.25);color:#173526;font-family:Arial,sans-serif}
+      .__wb_void_head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+      .__wb_void_head h2{margin:0;font-size:21px}. __wb_void_head small{color:#718174}
+      .__wb_void_close{border:0;background:#eef4ef;border-radius:10px;width:38px;height:38px;font-size:19px;cursor:pointer}
+      .__wb_void_list{display:grid;gap:8px;margin-top:10px}
+      .__wb_void_row{border:1px solid #dbe7dd;border-radius:14px;padding:12px;background:#fbfefb}
+      .__wb_void_top{display:flex;justify-content:space-between;gap:10px}. __wb_void_meta{color:#718174;font-size:11px;margin-top:4px}
+      .__wb_void_total{font-weight:900;color:#087438;white-space:nowrap}. __wb_void_actions{display:flex;justify-content:flex-end;margin-top:9px;gap:8px}
+      .__wb_void_btn{border:1px solid #dbe7dd;background:#fff;border-radius:10px;padding:8px 11px;font-weight:900;cursor:pointer}. __wb_void_btn.danger{background:#fff4f4;border-color:#ffd3d3;color:#c43f3f}
+      .__wb_void_badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900;margin-left:6px}. __wb_void_badge.paid{background:#e6f5ea;color:#278048}. __wb_void_badge.void{background:#eee8e3;color:#7b6e65}
+      .__wb_void_empty{padding:28px;text-align:center;color:#718174;border:1px dashed #c9dacd;border-radius:14px}
+      .__wb_void_confirm{position:fixed;inset:0;background:rgba(18,42,28,.45);display:grid;place-items:center;padding:15px;z-index:100000}
+      .__wb_void_confirm_box{width:min(460px,94vw);background:#fff;border-radius:22px;padding:19px}. __wb_void_confirm_box h3{margin:0 0 7px}
+      .__wb_void_confirm_box p{margin:0 0 12px;color:#718174;font-size:12px;line-height:1.5}
+      .__wb_void_reason{width:100%;min-height:90px;resize:vertical;border:1px solid #dbe7dd;border-radius:12px;padding:11px;box-sizing:border-box;outline:none}
+      .__wb_void_confirm_actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}. __wb_void_confirm_actions button{border:1px solid #dbe7dd;border-radius:11px;padding:9px 12px;font-weight:900;cursor:pointer}. __wb_void_confirm_actions .ok{background:#c43f3f;color:#fff;border-color:#c43f3f}
+      .__wb_void_toast{position:fixed;right:18px;bottom:18px;background:#173526;color:#fff;padding:11px 14px;border-radius:12px;z-index:100001;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+    `; doc.head.appendChild(st);
+  }
+
+  function toast(doc,msg){ const x=doc.createElement('div'); x.className='__wb_void_toast'; x.textContent=msg; doc.body.appendChild(x); setTimeout(()=>x.remove(),2600); }
+
+  async function showVoidModal(){
+    const doc=getDoc(); if(!doc) return;
+    injectStyle(doc);
+    if(doc.getElementById('__wb_void_modal')) return;
+    const sb=ensureClient();
+    const {data:rows,error}=await sb.from('transactions').select('id,receipt_number,transaction_at,grand_total,payment_method,status,note').order('transaction_at',{ascending:false}).limit(50);
+    if(error){ toast(doc,'Gagal membaca transaksi: '+error.message); return; }
+
+    const modal=doc.createElement('div'); modal.className='__wb_void_modal'; modal.id='__wb_void_modal';
+    modal.innerHTML=`<div class="__wb_void_box"><div class="__wb_void_head"><div><h2>Void Transaksi</h2><small>Hanya transaksi berstatus PAID yang bisa dibatalkan.</small></div><button class="__wb_void_close" id="__wb_void_close">×</button></div><div class="__wb_void_list" id="__wb_void_list"></div></div>`;
+    doc.body.appendChild(modal);
+    modal.querySelector('#__wb_void_close').onclick=()=>modal.remove();
+    const list=modal.querySelector('#__wb_void_list');
+    if(!rows?.length){ list.innerHTML='<div class="__wb_void_empty">Belum ada transaksi.</div>'; return; }
+    list.innerHTML=rows.map(r=>{
+      const stat=r.status==='void'?'<span class="__wb_void_badge void">VOID</span>':'<span class="__wb_void_badge paid">PAID</span>';
+      const action=r.status==='paid'?`<div class="__wb_void_actions"><button class="__wb_void_btn danger" data-id="${r.id}" data-receipt="${esc(r.receipt_number)}">Void Transaksi</button></div>`:'';
+      return `<div class="__wb_void_row"><div class="__wb_void_top"><div><b>${esc(r.receipt_number)}</b>${stat}<div class="__wb_void_meta">${dateText(r.transaction_at)} · ${esc(r.payment_method||'')}</div></div><div class="__wb_void_total">${rupiah(r.grand_total)}</div></div>${action}</div>`;
+    }).join('');
+    list.querySelectorAll('button[data-id]').forEach(btn=>btn.onclick=()=>confirmVoid(btn.dataset.id,btn.dataset.receipt));
+  }
+
+  function confirmVoid(id,receipt){
+    const doc=getDoc(); const old=doc.getElementById('__wb_void_confirm'); if(old) old.remove();
+    const box=doc.createElement('div'); box.className='__wb_void_confirm'; box.id='__wb_void_confirm';
+    box.innerHTML=`<div class="__wb_void_confirm_box"><h3>Batalkan transaksi?</h3><p><b>${esc(receipt)}</b> akan diubah menjadi VOID dan stok barang akan dikembalikan. Transaksi tetap tersimpan di histori. Alasan pembatalan wajib diisi.</p><textarea class="__wb_void_reason" id="__wb_void_reason" placeholder="Contoh: Salah input barang / customer batal..."></textarea><div class="__wb_void_confirm_actions"><button id="__wb_void_cancel">Tutup</button><button class="ok" id="__wb_void_ok">Void Transaksi</button></div></div>`;
+    doc.body.appendChild(box);
+    box.querySelector('#__wb_void_cancel').onclick=()=>box.remove();
+    box.querySelector('#__wb_void_ok').onclick=()=>doVoid(id);
+    setTimeout(()=>box.querySelector('#__wb_void_reason')?.focus(),50);
+  }
+
+  async function doVoid(id){
+    const doc=getDoc(), reason=doc.getElementById('__wb_void_reason')?.value.trim();
+    if(!reason){ toast(doc,'Alasan void wajib diisi.'); return; }
+    const sb=ensureClient();
+    const ok=doc.getElementById('__wb_void_ok'); if(ok){ok.disabled=true;ok.textContent='Memproses...';}
+    const {error}=await sb.rpc('void_pos_transaction',{p_transaction_id:id,p_reason:reason});
+    if(error){ toast(doc,'Void gagal: '+error.message); if(ok){ok.disabled=false;ok.textContent='Void Transaksi';} return; }
+    doc.getElementById('__wb_void_confirm')?.remove();
+    doc.getElementById('__wb_void_modal')?.remove();
+    toast(doc,'Transaksi berhasil di-VOID. Stok dikembalikan.');
+    setTimeout(()=>frame.contentWindow.location.reload(),900);
+  }
+
+  async function refreshNav(){
+    const doc=getDoc(); if(!doc) return;
+    const admin=await getAdmin().catch(()=>false);
+    if(admin===lastAdminState && (admin ? !!doc.getElementById('__wb_void_nav') : !doc.getElementById('__wb_void_nav'))) return;
+    lastAdminState=admin;
+    const existing=doc.getElementById('__wb_void_nav'); if(existing) existing.remove();
+    if(!admin) return;
+    const nav=doc.querySelector('.side-nav'); if(!nav) return;
+    const b=doc.createElement('button'); b.id='__wb_void_nav'; b.type='button'; b.innerHTML='<span class="ico">↩</span> Void Transaksi'; b.title='Void transaksi (Admin)'; b.onclick=showVoidModal; nav.appendChild(b);
+  }
+
+  frame.addEventListener('load',()=>{
+    lastAdminState=null;
+    try{ const doc=getDoc(); observer?.disconnect(); observer=new MutationObserver(()=>refreshNav()); observer.observe(doc.body,{childList:true,subtree:true}); }catch{}
+    refreshNav();
+    setInterval(refreshNav,2500);
+  });
+})();
+</script>
+</body>
+</html>
