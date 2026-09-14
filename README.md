@@ -32,18 +32,14 @@ Versi ini merupakan baseline yang telah diselesaikan sebelum pengembangan lanjut
 
 ## File Utama
 
-`warung-bahagia-demo-supabase-final-v22.html`
+`app.html`
 
-File tersebut merupakan build single-file V1.0 yang digunakan sebagai baseline aplikasi saat ini.
+`app.html` adalah entry point aplikasi produksi pada struktur repository yang telah dirapikan. Build historis V1.0 disimpan di `archive/`.
 
 ## Backend
 
-Aplikasi terhubung ke project Supabase **zsoftwe-pos**. Data operasional disimpan di Supabase, termasuk produk, stok, pengguna aplikasi, transaksi, item transaksi, pembayaran, dan pengaturan.
+Aplikasi terhubung ke project Supabase `zsoftwe-pos`.
 
 ## Catatan Keamanan
 
 Repository ini berisi kode frontend. Jangan pernah memasukkan Supabase `service_role` key, password database, atau secret lainnya ke dalam source code frontend.
-
-## Pengembangan Berikutnya
-
-Pengembangan selanjutnya sebaiknya dilakukan dari baseline V1.0 ini dengan versioning yang jelas agar setiap perubahan dapat ditelusuri dan diuji sebelum menjadi rilis baru.
