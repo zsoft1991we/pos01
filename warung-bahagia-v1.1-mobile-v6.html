@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+<meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<title>Warung Bahagia POS V1.1 Mobile</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3}#appFrame{display:block;width:100%;height:100%;border:0}</style>
+</head>
+<body>
+<iframe id="appFrame" src="warung-bahagia-v1.1-mobile-v4.html?v=mobile6-core" title="Warung Bahagia POS V1.1 Mobile"></iframe>
+<script>
+(function(){'use strict';
+const frame=document.getElementById('appFrame');
+function doc(){try{return frame.contentDocument}catch(e){return null}}
+function visible(el){if(!el)return false;const s=el.ownerDocument.defaultView.getComputedStyle(el);return s.display!=='none'&&s.visibility!=='hidden'&&s.opacity!=='0'}
+function fix(){const d=doc();if(!d||!d.body)return;let st=d.getElementById('wbv11v6');if(!st){st=d.createElement('style');st.id='wbv11v6';st.textContent=`
+html,body{max-width:100vw!important;overflow-x:hidden!important}
+.topbar{position:sticky!important;top:0!important}
+.topbar-row{display:block!important;position:relative!important;min-width:0!important}
+.welcome{display:block!important;min-width:0!important;max-width:calc(100vw - 82px)!important;padding-right:0!important;overflow:hidden!important}
+.welcome b{display:block!important;max-width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.welcome small{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.top-user{position:absolute!important;right:0!important;top:0!important;max-width:72px!important}
+.top-user>div:first-child{display:none!important}
+.top-user .avatar{width:30px!important;height:30px!important;flex:none!important}
+.receiptpage{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:100vh!important;z-index:10000!important;display:block!important;overflow-y:auto!important;overflow-x:hidden!important;box-sizing:border-box!important;padding:10px!important;background:#eef5ef!important;-webkit-overflow-scrolling:touch!important}
+.receiptpage .successgrid{display:block!important;width:100%!important;max-width:430px!important;margin:0 auto!important}
+.receiptpage .successbox{margin:0 0 8px!important;padding:14px!important;border-radius:15px!important}
+.receiptpage .successbox .return{font-size:30px!important}
+.receiptpage .receiptcard{padding:10px!important;margin:0!important;border-radius:15px!important}
+.receiptpage .receipt{width:100%!important;max-width:350px!important;margin:0 auto!important;box-sizing:border-box!important}
+.receiptpage,.receiptpage *{box-sizing:border-box!important}
+body.wb-receipt-mode #wbv11nav,body.wb-receipt-mode #wbv11cart,body.wb-receipt-mode #wbv11scrim{display:none!important}
+body.wb-receipt-mode .cart{display:none!important}
+`;
+d.head.appendChild(st)}
+const receipt=d.querySelector('.receiptpage');
+const on=visible(receipt);
+d.body.classList.toggle('wb-receipt-mode',on);
+if(on){receipt.setAttribute('tabindex','-1');receipt.scrollTop=0;const nav=d.getElementById('wbv11nav'),cart=d.getElementById('wbv11cart'),scr=d.getElementById('wbv11scrim');if(nav)nav.style.display='none';if(cart)cart.style.display='none';if(scr)scr.style.display='none'}
+}
+frame.addEventListener('load',()=>{setTimeout(fix,120);setTimeout(fix,500);setInterval(fix,700)});
+setInterval(fix,700);fix();
+})();
+</script>
+</body>
+</html>
