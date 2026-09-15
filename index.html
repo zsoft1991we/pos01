@@ -13,10 +13,9 @@
 (function(){
   var ua=navigator.userAgent||'';
   var mobile=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-  var narrow=window.matchMedia && window.matchMedia('(max-width: 800px)').matches;
-  location.replace((mobile||narrow)
-    ? 'warung-bahagia-v1.1-mobile-v6.html?v=mobile6'
-    : 'warung-bahagia-v1.0-final.html?v=desktop-final');
+  location.replace(mobile
+    ? 'warung-bahagia-v1.1-mobile-v6.html?v=mobile7'
+    : 'warung-bahagia-v1.0-final.html?v=desktop-final7');
 })();
 </script>
 <noscript><p style="padding:20px">Silakan aktifkan JavaScript.</p></noscript>
