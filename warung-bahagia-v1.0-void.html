@@ -20,14 +20,18 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
   let observer = null;
   let lastAdminState = null;
 
-  const esc = (s='') => String(s).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
+  const esc = (s='') => String(s).replace(/[&<>\\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\\"':'&quot;'}[c]));
   const rupiah = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n||0));
   const dateText = s => { try { return new Date(s).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}); } catch { return s||''; } };
 
   function getDoc(){ try { return frame.contentDocument; } catch { return null; } }
   function ensureClient(){
     if(client || !frame.contentWindow) return client;
-    client = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{storage:frame.contentWindow.sessionStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+    // The Supabase library belongs to the inner core iframe, not this wrapper.
+    // Reuse that same-window library so Admin detection works in V1.0 desktop and mobile.
+    const supa = frame.contentWindow.supabase;
+    if(!supa?.createClient) return null;
+    client = supa.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{storage:frame.contentWindow.sessionStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
     return client;
   }
   async function getAdmin(){
@@ -65,11 +69,6 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
     `; doc.head.appendChild(st);
   }
 
-  // Fix category tabs without touching the base app's lexical state.
-  // The base v23 click handler strips the first token from data-cat, so we
-  // deliberately add a harmless prefix. Example: "Makanan Dapur" becomes
-  // "__WB__ Makanan Dapur" and the original handler resolves it to the
-  // correct category name "Makanan Dapur".
   function normalizeCategoryButtons(doc){
     if(!doc) return;
     try{
@@ -85,8 +84,6 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
     if(!doc || doc.__wbCategoryTabsPatched) return;
     doc.__wbCategoryTabsPatched = true;
     normalizeCategoryButtons(doc);
-    // mousedown occurs before click, so this also covers freshly rendered tabs
-    // before MutationObserver callbacks have had a chance to run.
     doc.addEventListener('mousedown', (e) => {
       const btn=e.target?.closest?.('.tabs button[data-cat]');
       if(!btn) return;
@@ -97,10 +94,10 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
 
   async function showVoidModal(){
     const doc=getDoc(); if(!doc) return;
-    injectStyle(doc);
-    patchCategoryTabs(doc);
+    injectStyle(doc); patchCategoryTabs(doc);
     if(doc.getElementById('__wb_void_modal')) return;
     const sb=ensureClient();
+    if(!sb){ toast(doc,'Koneksi Supabase belum siap.'); return; }
     const {data:rows,error}=await sb.from('transactions').select('id,receipt_number,transaction_at,grand_total,payment_method,status,note').order('transaction_at',{ascending:false}).limit(50);
     if(error){ toast(doc,'Gagal membaca transaksi: '+error.message); return; }
     const modal=doc.createElement('div'); modal.className='__wb_void_modal'; modal.id='__wb_void_modal';
@@ -131,6 +128,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
     const doc=getDoc(), reason=doc.getElementById('__wb_void_reason')?.value.trim();
     if(!reason){ toast(doc,'Alasan void wajib diisi.'); return; }
     const sb=ensureClient();
+    if(!sb){ toast(doc,'Koneksi Supabase belum siap.'); return; }
     const ok=doc.getElementById('__wb_void_ok'); if(ok){ok.disabled=true;ok.textContent='Memproses...';}
     const {error}=await sb.rpc('void_pos_transaction',{p_transaction_id:id,p_reason:reason});
     if(error){ toast(doc,'Void gagal: '+error.message); if(ok){ok.disabled=false;ok.textContent='Void Transaksi';} return; }
@@ -142,18 +140,18 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
 
   async function refreshNav(){
     const doc=getDoc(); if(!doc) return;
-    patchCategoryTabs(doc);
-    normalizeCategoryButtons(doc);
+    patchCategoryTabs(doc); normalizeCategoryButtons(doc);
     const admin=await getAdmin().catch(()=>false);
     if(admin===lastAdminState && (admin ? !!doc.getElementById('__wb_void_nav') : !doc.getElementById('__wb_void_nav'))) return;
     lastAdminState=admin;
     const existing=doc.getElementById('__wb_void_nav'); if(existing) existing.remove();
     if(!admin) return;
     const nav=doc.querySelector('.side-nav'); if(!nav) return;
+    if(nav.querySelector('#__wb_void_nav')) return;
     const b=doc.createElement('button'); b.id='__wb_void_nav'; b.type='button'; b.innerHTML='<span class="ico">↩</span> Void Transaksi'; b.title='Void transaksi (Admin)'; b.onclick=showVoidModal; nav.appendChild(b);
   }
 
-  frame.addEventListener('load',()=>{
+  function onCoreLoad(){
     lastAdminState=null;
     try{
       const doc=getDoc();
@@ -163,8 +161,9 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3;fon
       if(doc?.body) observer.observe(doc.body,{childList:true,subtree:true});
     }catch{}
     refreshNav();
-    setInterval(refreshNav,2500);
-  });
+  }
+  frame.addEventListener('load',()=>{ setTimeout(onCoreLoad,250); setTimeout(onCoreLoad,1200); });
+  setInterval(refreshNav,2500);
 })();
 </script>
 </body>
