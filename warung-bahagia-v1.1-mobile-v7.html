@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<title>Warung Bahagia POS V1.1 Mobile</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3}#appFrame{width:100%;height:100%;border:0;display:block}</style>
+</head>
+<body>
+<iframe id="appFrame" src="warung-bahagia-v1.1-mobile-v4.html?v=mobile7-core" title="Warung Bahagia POS V1.1 Mobile"></iframe>
+<script>
+(function(){'use strict';
+const frame=document.getElementById('appFrame');
+function d(){try{return frame.contentDocument}catch(e){return null}}
+function visible(el){if(!el)return false;const s=el.ownerDocument.defaultView.getComputedStyle(el);return s.display!=='none'&&s.visibility!=='hidden'&&s.opacity!=='0'}
+function install(){
+ const doc=d(); if(!doc||!doc.body)return;
+ if(!doc.getElementById('wbv11v7')){
+  const st=doc.createElement('style');st.id='wbv11v7';st.textContent=`
+html,body{max-width:100vw!important;overflow-x:hidden!important}
+.topbar-row{display:block!important;position:relative!important;min-width:0!important}
+.welcome{display:block!important;max-width:calc(100vw - 82px)!important;min-width:0!important;padding-right:0!important;overflow:hidden!important}
+.welcome b,.welcome small{display:block!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.top-user{position:absolute!important;right:0!important;top:0!important;max-width:72px!important}.top-user>div:first-child{display:none!important}.top-user .avatar{width:30px!important;height:30px!important;flex:none!important}
+.cart{position:fixed!important;left:6px!important;right:6px!important;bottom:6px!important;top:auto!important;width:auto!important;height:min(72dvh,560px)!important;min-height:0!important;max-height:calc(100dvh - 14px)!important;padding:10px!important;z-index:5000!important;border-radius:18px!important;background:#fff!important;box-shadow:0 18px 55px rgba(15,60,31,.28)!important;overflow:hidden!important;transform:translate3d(0,calc(100% + 24px),0)!important;transition:transform .18s ease!important}
+.cart.wb11-open{transform:translate3d(0,0,0)!important}
+.cartlist{overflow-y:auto!important;min-height:55px!important}.step button{width:34px!important;height:34px!important}
+.pay{position:relative!important;z-index:2!important;min-height:48px!important}
+#wbv11nav{z-index:4000!important}
+#wbv11cart{z-index:6000!important;bottom:67px!important}
+#wbv11scrim{z-index:4500!important}
+.modal{z-index:9000!important}.modalbox{position:relative!important;z-index:9001!important}
+body.wb-pay-mode{overflow:hidden!important}body.wb-pay-mode #wbv11nav,body.wb-pay-mode #wbv11cart,body.wb-pay-mode #wbv11scrim{display:none!important}
+body.wb-pay-mode .cart{display:none!important}
+.receiptpage{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:10000!important;overflow-y:auto!important;overflow-x:hidden!important;padding:10px!important;box-sizing:border-box!important}
+.receiptpage .successgrid{display:block!important;width:100%!important;max-width:430px!important;margin:0 auto!important}.receiptpage .receipt{width:100%!important;max-width:350px!important;margin:0 auto!important}
+`;
+  doc.head.appendChild(st);
+ }
+ // Make the floating cart button deterministic: tapping it always opens the cart.
+ const cb=doc.getElementById('wbv11cart');
+ if(cb&&!cb.__wbv7){cb.__wbv7=true;cb.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();const c=doc.querySelector('.cart');if(c)c.classList.add('wb11-open');const s=doc.getElementById('wbv11scrim');if(s)s.classList.add('show');},true)}
+ const observer=new MutationObserver(function(){
+   const modal=[...doc.querySelectorAll('.modal')].find(visible);
+   doc.body.classList.toggle('wb-pay-mode',!!modal);
+   const cart=doc.querySelector('.cart');
+   const open=cart&&cart.classList.contains('wb11-open');
+   const nav=doc.getElementById('wbv11nav'),float=doc.getElementById('wbv11cart'),scr=doc.getElementById('wbv11scrim');
+   if(open||modal){if(nav)nav.style.display='none';if(float)float.style.display='none';if(scr&&!modal)scr.style.display='block'}
+   else {if(nav)nav.style.display='flex';if(float&&cart&&cart.querySelectorAll('.lineitem').length)float.style.display='block';}
+ });
+ observer.observe(doc.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+ if(!doc.__wbv7Timers){doc.__wbv7Timers=true;setInterval(function(){
+   const modal=[...doc.querySelectorAll('.modal')].find(visible);doc.body.classList.toggle('wb-pay-mode',!!modal);
+   const cart=doc.querySelector('.cart');if(!cart)return;const open=cart.classList.contains('wb11-open');
+   const nav=doc.getElementById('wbv11nav'),float=doc.getElementById('wbv11cart'),scr=doc.getElementById('wbv11scrim');
+   if(open||modal){if(nav)nav.style.display='none';if(float)float.style.display='none';if(scr&&!modal)scr.style.display='block'}
+   else if(!modal){if(nav)nav.style.display='flex';if(float&&cart.querySelectorAll('.lineitem').length)float.style.display='block';}
+ },300)}
+}
+frame.addEventListener('load',function(){setTimeout(install,100);setTimeout(install,700)});setInterval(install,1200);install();
+})();
+</script>
+</body></html>
