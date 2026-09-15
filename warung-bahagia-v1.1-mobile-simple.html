@@ -10,14 +10,60 @@
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3}
 #appFrame{display:block;width:100%;height:100%;border:0}
+#mobileMenuBtn{position:fixed;left:10px;top:10px;width:46px;height:46px;border:0;border-radius:12px;background:#0f9447;color:#fff;font-size:25px;font-weight:900;line-height:1;display:grid;place-items:center;z-index:999999;box-shadow:0 6px 18px rgba(0,0,0,.22);cursor:pointer;touch-action:manipulation}
+#mobileMenuBtn.open{background:#075b35}
+#mobileMenuShade{position:fixed;inset:0;background:rgba(15,35,23,.42);z-index:999990;display:none}
+#mobileMenu{position:fixed;left:0;top:0;bottom:0;width:min(285px,86vw);background:linear-gradient(180deg,#046a38,#075b35 58%,#054b2f);z-index:999995;transform:translateX(-105%);transition:transform .22s ease;box-shadow:16px 0 35px rgba(0,0,0,.22);overflow:auto}
+#mobileMenu.open{transform:translateX(0)}
+#mobileMenuShade.open{display:block}
+#mobileMenu .mh{color:#fff;padding:22px 18px 14px;font-weight:900;font-size:20px}
+#mobileMenu .ms{color:#d7f2df;font-size:11px;padding:0 18px 16px}
+#mobileMenu .mi{display:block;width:calc(100% - 24px);margin:5px 12px;border:0;background:rgba(255,255,255,.08);color:#fff;border-radius:12px;padding:13px 14px;text-align:left;font-weight:900;font-size:14px}
+#mobileMenu .mi:active{background:rgba(255,255,255,.18)}
 </style>
 </head>
 <body>
-<iframe id="appFrame" src="warung-bahagia-demo-supabase-final-v23.html?v=mobile-simple" title="Warung Bahagia POS Mobile"></iframe>
+<button id="mobileMenuBtn" type="button" aria-label="Buka menu" title="Menu">☰</button>
+<div id="mobileMenuShade"></div>
+<div id="mobileMenu" aria-hidden="true">
+  <div class="mh">Warung Bahagia</div>
+  <div class="ms">Menu aplikasi</div>
+  <button class="mi" data-target="pos">🛒 POS Kasir</button>
+  <button class="mi" data-target="pesanan">📋 Pesanan</button>
+  <button class="mi" data-target="laporan">📊 Laporan</button>
+  <button class="mi" data-target="stok">📦 Stok / Menu</button>
+  <button class="mi" data-target="pengaturan">⚙ Pengaturan</button>
+  <button class="mi" data-target="void">↩ Void Transaksi</button>
+</div>
+<iframe id="appFrame" src="warung-bahagia-demo-supabase-final-v23.html?v=mobile-menu-final" title="Warung Bahagia POS Mobile"></iframe>
 <script>
 (function(){
   const frame=document.getElementById('appFrame');
+  const btn=document.getElementById('mobileMenuBtn');
+  const shade=document.getElementById('mobileMenuShade');
+  const menu=document.getElementById('mobileMenu');
+  function closeMenu(){menu.classList.remove('open');shade.classList.remove('open');btn.classList.remove('open');btn.textContent='☰';menu.setAttribute('aria-hidden','true')}
+  function openMenu(){menu.classList.add('open');shade.classList.add('open');btn.classList.add('open');btn.textContent='×';menu.setAttribute('aria-hidden','false')}
+  btn.addEventListener('click',()=>menu.classList.contains('open')?closeMenu():openMenu());
+  shade.addEventListener('click',closeMenu);
   function doc(){try{return frame.contentDocument}catch(e){return null}}
+  function navigate(target){
+    const d=doc(); if(!d) return;
+    const buttons=[...d.querySelectorAll('.side-nav button')];
+    const found=buttons.find(b=>{
+      const t=(b.textContent||'').toLowerCase();
+      if(target==='pos')return /pos|kasir/.test(t) && !/laporan|stok|pengaturan|pesanan|void/.test(t);
+      if(target==='pesanan')return /pesanan/.test(t);
+      if(target==='laporan')return /laporan/.test(t);
+      if(target==='stok')return /stok|menu/.test(t);
+      if(target==='pengaturan')return /pengaturan/.test(t);
+      if(target==='void')return /void/.test(t);
+      return false;
+    });
+    if(found)found.click();
+    closeMenu();
+  }
+  menu.querySelectorAll('.mi').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.target)));
   function inject(){
     const d=doc();
     if(!d||!d.head||!d.body)return;
@@ -35,65 +81,22 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3}
       .welcome small{display:block!important;font-size:9px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
       .top-user{position:absolute!important;right:0!important;top:0!important;max-width:92px!important}
       .top-user>div:first-child{display:none!important}
-      .top-user .avatar{width:32px!important;height:32px!important}
-      .clockbox{display:none!important}
+      .top-user .avatar{width:32px!important;height:32px!important}.clockbox{display:none!important}
       .search-shell{display:grid!important;grid-template-columns:minmax(0,1fr) 42px!important;gap:6px!important;margin-top:7px!important}
-      .search-box{min-height:42px!important;border-radius:12px!important}
-      .search-box input{font-size:12px!important;padding:0 10px!important}
-      .camera{width:42px!important;height:42px!important;border-radius:12px!important}
-      main{padding:8px!important;padding-bottom:310px!important}
-      .posgrid{display:block!important}
-      .catalog{padding:7px!important;border-radius:14px!important}
-      .tabs{display:flex!important;overflow-x:auto!important;gap:5px!important;padding-bottom:6px!important;scrollbar-width:none!important}
-      .tabs::-webkit-scrollbar{display:none}
-      .tabs button{flex:0 0 auto!important;min-height:34px!important;padding:6px 10px!important;border-radius:10px!important;font-size:10px!important}
-      .products{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
-      .product{min-width:0!important;border-radius:12px!important}
-      .pic{height:74px!important;font-size:30px!important}
-      .pic img{padding:5px!important}
-      .pbody{padding:7px!important}
-      .pname{font-size:10px!important;line-height:1.2!important;min-height:24px!important}
-      .price{font-size:12px!important;margin-top:3px!important}
-      .stock{font-size:8px!important}
-      .soldout{font-size:7px!important;padding:2px 5px!important}
-      /* Keep the proven desktop cart markup/behavior, only resize and dock it below the catalog. */
-      .cart{position:fixed!important;left:8px!important;right:8px!important;bottom:8px!important;top:auto!important;width:auto!important;height:270px!important;min-height:0!important;padding:10px!important;z-index:900!important;border-radius:16px!important;box-shadow:0 10px 35px rgba(15,60,31,.22)!important;overflow:hidden!important}
-      .cart-head{flex:none!important}
-      .cart h2{font-size:15px!important}
-      .clear-cart{font-size:9px!important;padding:6px 8px!important}
-      .cartlist{margin-top:6px!important;min-height:0!important;overflow:auto!important}
-      .lineitem{padding:7px!important;border-radius:10px!important}
-      .linehead strong,.lineprice{font-size:10px!important}
-      .qty{margin-top:5px!important}
-      .step{gap:6px!important}
-      .step button{width:30px!important;height:30px!important}
-      .summary{margin-top:6px!important;padding-top:6px!important}
-      .sumrow{font-size:10px!important;margin:4px 0!important}
-      .total{font-size:16px!important}
-      .pay{min-height:46px!important;padding:11px!important;margin-top:7px!important;border-radius:12px!important;font-size:15px!important}
-      .hybrid-help{display:none!important}
-      /* Payment modal stays exactly the existing proven flow, just fits handset. */
-      .modal{z-index:2000!important;padding:8px!important}
-      .modalbox{width:100%!important;max-height:calc(100vh - 16px)!important;border-radius:18px!important;padding:12px!important}
-      .paytabs button{min-height:38px!important;font-size:10px!important}
-      .cashbig{font-size:25px!important}
-      .quick button{min-height:38px!important;font-size:10px!important}
-      .changebox strong{font-size:28px!important}
-      .confirm{min-height:44px!important;font-size:13px!important}
-      /* Receipt takes the whole handset viewport, with no mobile dock over it. */
-      .receiptpage{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:100vh!important;padding:10px!important;overflow:auto!important;z-index:4000!important;box-sizing:border-box!important}
-      .receiptpage .successgrid{display:block!important;width:100%!important;max-width:430px!important;margin:0 auto!important}
-      .receiptpage .successbox{padding:14px!important;margin:0 0 8px!important;border-radius:16px!important}
-      .receiptpage .successbox .return{font-size:30px!important}
-      .receiptpage .receiptcard{padding:10px!important;border-radius:16px!important}
-      .receiptpage .receipt{width:100%!important;max-width:350px!important;margin:0 auto!important}
-      /* Other screens: compact sizing only. */
+      .search-box{min-height:42px!important;border-radius:12px!important}.search-box input{font-size:12px!important;padding:0 10px!important}.camera{width:42px!important;height:42px!important;border-radius:12px!important}
+      main{padding:8px!important;padding-bottom:310px!important}.posgrid{display:block!important}.catalog{padding:7px!important;border-radius:14px!important}
+      .tabs{display:flex!important;overflow-x:auto!important;gap:5px!important;padding-bottom:6px!important;scrollbar-width:none!important}.tabs::-webkit-scrollbar{display:none}.tabs button{flex:0 0 auto!important;min-height:34px!important;padding:6px 10px!important;border-radius:10px!important;font-size:10px!important}
+      .products{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}.product{min-width:0!important;border-radius:12px!important}.pic{height:74px!important;font-size:30px!important}.pic img{padding:5px!important}.pbody{padding:7px!important}.pname{font-size:10px!important;line-height:1.2!important;min-height:24px!important}.price{font-size:12px!important;margin-top:3px!important}.stock{font-size:8px!important}.soldout{font-size:7px!important;padding:2px 5px!important}
+      .cart{position:fixed!important;left:8px!important;right:8px!important;bottom:8px!important;top:auto!important;width:auto!important;height:270px!important;min-height:0!important;padding:10px!important;z-index:900!important;border-radius:16px!important;box-shadow:0 10px 35px rgba(15,60,31,.22)!important;overflow:hidden!important}.cart-head{flex:none!important}.cart h2{font-size:15px!important}.clear-cart{font-size:9px!important;padding:6px 8px!important}.cartlist{margin-top:6px!important;min-height:0!important;overflow:auto!important}.lineitem{padding:7px!important;border-radius:10px!important}.linehead strong,.lineprice{font-size:10px!important}.qty{margin-top:5px!important}.step{gap:6px!important}.step button{width:30px!important;height:30px!important}.summary{margin-top:6px!important;padding-top:6px!important}.sumrow{font-size:10px!important;margin:4px 0!important}.total{font-size:16px!important}.pay{min-height:46px!important;padding:11px!important;margin-top:7px!important;border-radius:12px!important;font-size:15px!important}.hybrid-help{display:none!important}
+      .modal{z-index:2000!important;padding:8px!important}.modalbox{width:100%!important;max-height:calc(100vh - 16px)!important;border-radius:18px!important;padding:12px!important}.paytabs button{min-height:38px!important;font-size:10px!important}.cashbig{font-size:25px!important}.quick button{min-height:38px!important;font-size:10px!important}.changebox strong{font-size:28px!important}.confirm{min-height:44px!important;font-size:13px!important}
+      .receiptpage{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:100vh!important;padding:10px!important;overflow:auto!important;z-index:4000!important;box-sizing:border-box!important}.receiptpage .successgrid{display:block!important;width:100%!important;max-width:430px!important;margin:0 auto!important}.receiptpage .successbox{padding:14px!important;margin:0 0 8px!important;border-radius:16px!important}.receiptpage .successbox .return{font-size:30px!important}.receiptpage .receiptcard{padding:10px!important;border-radius:16px!important}.receiptpage .receipt{width:100%!important;max-width:350px!important;margin:0 auto!important}
       .stockgrid{display:block!important}.formcard{padding:10px!important}.metrics{grid-template-columns:1fr!important}.reportgrid{display:block!important}.chart,.top5{padding:10px!important;margin-bottom:7px!important}.chartbox{height:170px!important}
     `;
     d.head.appendChild(st);
   }
-  frame.addEventListener('load',()=>setTimeout(inject,120));
-  setInterval(inject,800);
+  frame.addEventListener('load',()=>setTimeout(inject,150));
+  setInterval(inject,700);
+  inject();
 })();
 </script>
 </body>
