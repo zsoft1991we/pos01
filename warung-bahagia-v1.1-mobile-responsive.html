@@ -13,22 +13,24 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f3f8f3}
 </style>
 </head>
 <body>
-<iframe id="appFrame" src="warung-bahagia-v1.0-void.html?v=responsive-mobile2" title="Warung Bahagia POS Mobile"></iframe>
+<iframe id="appFrame" src="warung-bahagia-v1.0-void.html?v=responsive-mobile3" title="Warung Bahagia POS Mobile"></iframe>
 <script>
 (function(){'use strict';
 const frame=document.getElementById('appFrame');
+const isMobile=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent||'');
 function core(){try{const outer=frame.contentDocument;return outer&&outer.querySelector('#appFrame')?.contentDocument||null}catch(e){return null}}
 function addStyle(d){
   if(!d||d.getElementById('wb-mobile-responsive-style'))return;
-  if(!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent||''))return;
+  if(!isMobile)return;
   const s=d.createElement('style');s.id='wb-mobile-responsive-style';s.textContent=`
-    /* MOBILE ONLY: same V1.0 application, responsive presentation only. */
+    /* MOBILE ONLY: V1.0 business logic preserved; presentation/navigation only. */
     html,body{min-width:320px!important;width:100%!important;max-width:100vw!important;overflow-x:hidden!important}
-    .sidebar{display:none!important}
+    .sidebar{display:flex!important;left:0!important;top:0!important;bottom:0!important;width:255px!important;max-width:86vw!important;transform:translateX(-110%)!important;transition:transform .22s ease!important;z-index:100!important;box-shadow:16px 0 35px rgba(0,0,0,.18)!important}
+    body.wb-drawer-open .sidebar{transform:translateX(0)!important}
     .content{margin-left:0!important;width:100%!important;min-width:0!important}
     .app-shell{display:block!important;min-height:100vh!important}
-    .topbar{padding:8px 9px!important;position:sticky!important;top:0!important}
-    .topbar-row{display:block!important;min-width:0!important}
+    .topbar{padding:8px 9px!important;position:sticky!important;top:0!important;z-index:60!important}
+    .topbar-row{display:block!important;min-width:0!important;padding-left:42px!important;position:relative!important}
     .welcome{display:block!important;max-width:100%!important;min-width:0!important;padding:0!important;overflow:hidden!important}
     .welcome b{display:block!important;font-size:15px!important;line-height:1.15!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
     .welcome small{font-size:9px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
@@ -81,10 +83,41 @@ function addStyle(d){
     .receiptpage .receiptcard{padding:9px!important;border-radius:15px!important}
     .receiptpage .receipt{width:100%!important;max-width:350px!important;margin:0 auto!important}
     .receiptpage button{min-height:40px!important}
+    #wb-mobile-nav{position:absolute!important;left:6px!important;top:5px!important;width:36px!important;height:36px!important;border:1px solid #dbe7dd!important;background:#fff!important;color:#075b35!important;border-radius:11px!important;font-size:21px!important;font-weight:900!important;line-height:1!important;display:grid!important;place-items:center!important;z-index:70!important;box-shadow:0 4px 12px rgba(20,74,40,.08)!important}
+    #wb-mobile-nav:active{transform:scale(.96)}
+    #wb-mobile-scrim{position:fixed!important;inset:0!important;background:rgba(18,42,28,.42)!important;z-index:90!important;display:none!important}
+    body.wb-drawer-open #wb-mobile-scrim{display:block!important}
   `;
   d.head.appendChild(s)
 }
-function apply(){const d=core();if(d)addStyle(d)}
+function enhance(d){
+  if(!d||!isMobile)return;
+  if(!d.getElementById('wb-mobile-nav')){
+    const top=d.querySelector('.topbar');
+    if(top){
+      const b=d.createElement('button');
+      b.id='wb-mobile-nav';b.type='button';b.setAttribute('aria-label','Buka menu');b.setAttribute('title','Buka menu');b.textContent='☰';
+      b.addEventListener('click',function(){d.body.classList.toggle('wb-drawer-open');b.textContent=d.body.classList.contains('wb-drawer-open')?'×':'☰';});
+      top.appendChild(b);
+    }
+  }
+  if(!d.getElementById('wb-mobile-scrim')){
+    const scr=d.createElement('div');scr.id='wb-mobile-scrim';
+    scr.addEventListener('click',function(){d.body.classList.remove('wb-drawer-open');const b=d.getElementById('wb-mobile-nav');if(b)b.textContent='☰';});
+    d.body.appendChild(scr);
+  }
+  const nav=d.querySelector('.side-nav');
+  if(nav&&!nav.dataset.wbDrawerBound){
+    nav.dataset.wbDrawerBound='1';
+    nav.addEventListener('click',function(e){
+      const btn=e.target.closest('button');
+      if(btn){d.body.classList.remove('wb-drawer-open');const b=d.getElementById('wb-mobile-nav');if(b)b.textContent='☰';}
+    });
+  }
+  const logout=d.querySelector('.side-user .logout');
+  if(logout&&!logout.dataset.wbDrawerBound){logout.dataset.wbDrawerBound='1';logout.addEventListener('click',function(){d.body.classList.remove('wb-drawer-open')});}
+}
+function apply(){const d=core();if(d){addStyle(d);enhance(d)}}
 frame.addEventListener('load',()=>setTimeout(apply,120));
 setInterval(apply,900);
 apply();
