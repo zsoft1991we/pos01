@@ -1,12 +1,24 @@
 <!doctype html>
 <html lang="id">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<title>Warung Bahagia POS V1.1 Mobile</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Warung Bahagia POS</title>
 </head>
 <body style="margin:0;background:#f3f8f3;font-family:Arial,sans-serif">
-<script>location.replace('warung-bahagia-v1.1-mobile-v6.html?v=mobile6');</script>
-<noscript><p style="padding:20px">Silakan aktifkan JavaScript untuk membuka Warung Bahagia POS.</p></noscript>
+<script>
+(function(){
+  var ua=navigator.userAgent||'';
+  var mobile=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  var narrow=window.matchMedia && window.matchMedia('(max-width: 800px)').matches;
+  location.replace((mobile||narrow)
+    ? 'warung-bahagia-v1.1-mobile-v6.html?v=mobile6'
+    : 'warung-bahagia-v1.0-final.html?v=desktop-final');
+})();
+</script>
+<noscript><p style="padding:20px">Silakan aktifkan JavaScript.</p></noscript>
 </body>
 </html>
